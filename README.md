@@ -2,8 +2,8 @@
 Todo application that runs from the command line on windows. Made using c++.
 
 [x] Create a new entry:
-    - Name of task
-    - Expiry Date (Optional)
+    \t- Name of task
+    \t- Expiry Date (Optional)
 
 [x] Store all entries
 
