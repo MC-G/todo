@@ -1,4 +1,4 @@
-# todo
+# todo - JSON Storage
 Todo application that runs from the command line on windows. Made using C++. Todo list is stored in a JSON file using JSON for Modern C++. 
 
 [x] Create a new entry:
@@ -7,7 +7,7 @@ Todo application that runs from the command line on windows. Made using C++. Tod
     - Description (Optional)
     
 [x] Store all entries
-    - Entries stored in JSoN file.
+    - Entries stored in JSON file.
 
 [x] Show current entries
 
