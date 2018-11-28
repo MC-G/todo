@@ -6,34 +6,33 @@
 
 void show_tasks(std::ifstream &read_file, std::string &filename);
 time_t convert_string_to_time_t(std::string &expiry_string);
-int convert_expiry_to_days(std::string  &expiry);
+int convert_expiry_to_days(long int expiry);
 void delete_task(int id, std::ifstream &read_file, std::string &filename);
 
 int main(int argc, char **argv)
 {
-    std::string filename = "C:\\Users\\marcr\\CLionProjects\\todo\\cmake-build-debug\\todo storage.txt";
+    std::string filename = "C:\\Users\\marcr\\CLionProjects\\todo\\cmake-build-debug\\test.json";
     std::ifstream read_file;
-    std::ofstream append_file;
 
     if(argc == 1){
         show_tasks(read_file, filename);
         return 1;
     }
-    else if(argc > 4){
+    else if(argc > 5){
         std::cout << "\nToo many command line arguments";
         return -1;
     }
     else{
-        if(std::string(argv[1]) == "-a" && argc == 4){
+        if(std::string(argv[1]) == "-a" && argc == 5){
             std::string expiry_date = argv[3];
             time_t expiry = convert_string_to_time_t(expiry_date);
-            create_task task(argv[2], expiry);
-            task.save_task(append_file, filename);
+            create_task task(argv[2], argv[4], expiry);
+            task.save_task(read_file, filename);
             show_tasks(read_file, filename);
         }
-        else if(std::string(argv[1]) == "-a" && argc == 3){
-            create_task task(argv[2]);
-            task.save_task(append_file, filename);
+        else if(std::string(argv[1]) == "-a" && argc == 4){
+            create_task task(argv[2], argv[3]);
+            task.save_task(read_file, filename);
             show_tasks(read_file, filename);
         }
         else if(std::string(argv[1]) == "-r" && argc == 3){
@@ -49,41 +48,36 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
 void show_tasks(std::ifstream &read_file, std::string &filename)
 {
     read_file.open(filename.c_str());
     if(!(read_file.is_open())){
-        std::cout << "\nError opening file.";
+        std::cout << "\nError reading file.";
     }
-    std::string line;
-    for(int i = 1; getline(read_file, line); i++){
-        std::vector <std::string> tokens;
-        std::stringstream check(line);
-        std::string item;
-        while (getline(check, item, '\"')) {
-            tokens.push_back(item);
-        }
-        std::cout << i << ") ";
-        std::cout << tokens[1] << " ";
-        int days_left = convert_expiry_to_days(tokens[3]);
-        if (tokens[3] != "0"){
-            std::cout << "(" << days_left << " days left)" << std::endl;
+    json tasks = json::parse(read_file);
+    for(int i = 0; i < tasks.size(); i++){
+        std::cout << i + 1 << ")";
+        std::cout << tasks[i]["Name"] << " ";
+        int days_left = convert_expiry_to_days(tasks[i]["Expiry"]);
+        if (tasks[i]["Expiry"] != 0){
+            std::cout << "(" << days_left + 1 << " days left)" << std::endl;
         }
         else{
             std::cout << std::endl;
+        }
+        if(tasks[i]["Description"] != nullptr){
+            std::cout << "\t- " << tasks[i]["Description"] << std::endl;
         }
     }
 
     read_file.close();
 }
 
-int convert_expiry_to_days(std::string &expiry)
+int convert_expiry_to_days(long int expiry)
 {
-    long int t = std::stol(expiry.c_str());
     time_t now = time(0);
     unsigned int current = static_cast<unsigned int>(now);
-    return (t - current)/(86400);
+    return (expiry - current)/(86400);
 }
 
 time_t convert_string_to_time_t(std::string &expiry_string)
@@ -114,23 +108,23 @@ time_t convert_string_to_time_t(std::string &expiry_string)
 void delete_task(int id, std::ifstream &read_file, std::string &filename)
 {
     std::ofstream temp_file;
-    std::string temp_path = "C:\\Users\\marcr\\CLionProjects\\todo\\cmake-build-debug\\temp.txt";
+    std::string temp_path = "C:\\Users\\marcr\\CLionProjects\\todo\\cmake-build-debug\\temp.json";
     temp_file.open(temp_path.c_str(), std::ios::out);
-    if(temp_file.is_open()){
+    if(temp_file.is_open()) {
         read_file.open(filename.c_str());
-        if(read_file.is_open()){
-            std::string line;
+        if (read_file.is_open()) {
+            std::cout << "\nReading in tasks\n";
+            json tasks = json::parse(read_file);
 
-            for(int i = 0; getline(read_file, line); i++){
-                if (i + 1 != id)
-                    temp_file << line << std::endl;
-            }
-
-            temp_file.close();
-            read_file.close();
-            std::remove(filename.c_str());
-            std::rename(temp_path.c_str(), filename.c_str());
+            // Remove task from tasks object
+            tasks.erase(id - 1);
+            temp_file << std::setw(4) << tasks;
         }
+
+        temp_file.close();
+        read_file.close();
+        std::remove(filename.c_str());
+        std::rename(temp_path.c_str(), filename.c_str());
     }
     else{
         std::cout << std::endl << "Error Creating temporary file" <<std::endl;
